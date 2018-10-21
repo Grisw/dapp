@@ -22,8 +22,10 @@ class NameModal extends Component {
         const {account, contract} = this.state;
 
         await contract.signup(this.state.name, {from: account});
-        const status = await contract.getStatus({from: account});
-        PubSub.publish("status", status);
+        const name = await contract.getName({from: account});
+        PubSub.publish("name", {name: name, account: account});
+        const coins = await contract.getCoins({from: account});
+        PubSub.publish("coins", coins);
     };
 
     render() {

@@ -1,38 +1,23 @@
 import React, {Component} from "react";
-import GameContract from "../contracts/Game.json";
-import getWeb3 from "../utils/getWeb3";
-import truffleContract from "truffle-contract";
 import PubSub from "pubsub-js";
 import NameModal from "./NameModal";
 
 class Login extends Component {
-    state = {web3: null, account: "", name: "", contract: null};
-
-    componentDidMount = async () => {
-        try {
-            const web3 = await getWeb3();
-            const Contract = truffleContract(GameContract);
-            Contract.setProvider(web3.currentProvider);
-            this.setState({web3, contract: await Contract.deployed()});
-        } catch (error) {
-            // Catch any errors for any of the above operations.
-            alert(
-                `Failed to load web3, accounts, or contract. Check console for details.`
-            );
-            console.log(error);
-        }
-    };
+    state = {account: ""};
 
     login = async () => {
-        const {account, contract} = this.state;
+        const account = this.state.account;
+        const contract = this.props.contract;
 
         try{
             const isSignedUp = await contract.isSignedUp({from: account});
             if (!isSignedUp){
                 PubSub.publish("namemodal", {account, contract});
             }else{
-                const status = await contract.getStatus({from: account});
-                PubSub.publish("status", status);
+                const name = await contract.getName({from: account});
+                PubSub.publish("name", {name: name, account: account});
+                const coins = await contract.getCoins({from: account});
+                PubSub.publish("coins", coins);
             }
         }catch (e) {
             alert("账号错误，请先解锁账户。");

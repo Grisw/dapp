@@ -1,26 +1,33 @@
 import React, {Component} from "react";
 import PubSub from "pubsub-js";
-import Map from "./Map";
+import GameStart from "./GameStart";
+import GameBoard from "./GameBoard";
 
 class Game extends Component {
+    state = {gameStart: false, isFirst: false, match: null, enemy: "", bet: 0};
 
-    // state = {hasLogin: false, name: "", hoverExit: false, coins: 0};
-    //
-    // componentDidMount = async () => {
-    //     this.pubsub_coins = PubSub.subscribe("coins", function (topic, message) {
-    //         this.setState({
-    //             coins: message
-    //         });
-    //     }.bind(this));
-    // };
-    //
-    // componentWillUnmount = async () => {
-    //     PubSub.unsubscribe(this.pubsub_coins);
-    // };
+    componentDidMount = async () => {
+        this.pubsub_match = PubSub.subscribe("match", function (topic, message) {
+            this.setState({
+                gameStart: true,
+                isFirst: message.isFirst,
+                match: message.match,
+                enemy: message.enemy,
+                bet: message.bet
+            });
+        }.bind(this));
+    };
+
+    componentWillUnmount = async () => {
+        PubSub.unsubscribe(this.pubsub_match);
+    };
 
     render() {
         return (
-            <Map/>
+            <div>
+                {!this.state.gameStart && <GameStart account={this.props.account} contract={this.props.contract}/>}
+                {this.state.gameStart && <GameBoard isFirst={this.state.isFirst} match={this.state.match} enemy={this.state.enemy} bet={this.state.bet} account={this.props.account} contract={this.props.contract}/>}
+            </div>
         );
     }
 }
