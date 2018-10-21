@@ -1,71 +1,37 @@
-import React, { Component } from "react";
-import SimpleStorageContract from "./contracts/SimpleStorage.json";
-import getWeb3 from "./utils/getWeb3";
-import truffleContract from "truffle-contract";
+import React, {Component} from "react";
+import Nav from "./components/Nav";
+import Login from "./components/Login";
+import Game from "./components/Game";
 
 import "./App.css";
+import "bootstrap/dist/css/bootstrap.css";
+import "bootstrap/dist/js/bootstrap";
+import PubSub from "pubsub-js";
 
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null };
+    state = {hasLogin: false};
 
-  componentDidMount = async () => {
-    try {
-      // Get network provider and web3 instance.
-      const web3 = await getWeb3();
+    componentDidMount = async () => {
+        this.pubsub_status = PubSub.subscribe("status", function (topic, message) {
+            this.setState({hasLogin: true});
+        }.bind(this));
+    };
 
-      // Use web3 to get the user's accounts.
-      const accounts = await web3.eth.getAccounts();
+    componentWillUnmount = async () => {
+        PubSub.unsubscribe(this.pubsub_status);
+    };
 
-      // Get the contract instance.
-      const Contract = truffleContract(SimpleStorageContract);
-      Contract.setProvider(web3.currentProvider);
-      const instance = await Contract.deployed();
-
-      // Set web3, accounts, and contract to the state, and then proceed with an
-      // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance }, this.runExample);
-    } catch (error) {
-      // Catch any errors for any of the above operations.
-      alert(
-        `Failed to load web3, accounts, or contract. Check console for details.`
-      );
-      console.log(error);
+    render() {
+        return (
+            <div>
+                <Nav/>
+                <div className="container">
+                    {!this.state.hasLogin && <Login/>}
+                    {this.state.hasLogin && <Game/>}
+                </div>
+            </div>
+        );
     }
-  };
-
-  runExample = async () => {
-    const { accounts, contract } = this.state;
-
-    // Stores a given value, 5 by default.
-    await contract.set(5, { from: accounts[0] });
-
-    // Get the value from the contract to prove it worked.
-    const response = await contract.get();
-
-    // Update state with the result.
-    this.setState({ storageValue: response.toNumber() });
-  };
-
-  render() {
-    if (!this.state.web3) {
-      return <div>Loading Web3, accounts, and contract...</div>;
-    }
-    return (
-      <div className="App">
-        <h1>Good to Go!</h1>
-        <p>Your Truffle Box is installed and ready.</p>
-        <h2>Smart Contract Example</h2>
-        <p>
-          If your contracts compiled and migrated successfully, below will show
-          a stored value of 5 (by default).
-        </p>
-        <p>
-          Try changing the value stored on <strong>line 37</strong> of App.js.
-        </p>
-        <div>The stored value is: {this.state.storageValue}</div>
-      </div>
-    );
-  }
 }
 
 export default App;
