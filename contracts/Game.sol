@@ -29,6 +29,7 @@ contract Game {
     mapping(address => address) playingPlaysAddr;
     address[] waiting;
     mapping(address => GamePlay) waitingPlays;
+    mapping(address => Step) lastStep;
 
     function signup(string name) public returns(bool) {
         if(isSignedUp()){
@@ -123,7 +124,7 @@ contract Game {
         playingPlays[addr].steps.push(Step(msg.sender, i, j));
         if (checkChess(i, j)){
             playingPlays[addr].winner = msg.sender;
-            win(playingPlays[addr].bet);
+            win(playingPlays[addr].bet, addr);
         }
         if (playingPlays[addr].player1 == msg.sender){
             playingPlays[addr].turn = playingPlays[addr].player2;
@@ -133,10 +134,19 @@ contract Game {
     }
 
     event Win();
-    function win(uint bet) private {
+    function win(uint bet, address addr) private {
         players[msg.sender].coins += bet;
-        emit Win();
+        if (playingPlays[addr].player1 == msg.sender){
+            players[playingPlays[addr].player2].coins -= bet;
+            delete playingPlaysAddr[playingPlays[addr].player2];
+            lastStep[playingPlays[addr].player2] = playingPlays[addr].steps[playingPlays[addr].steps.length - 1];
+        }else{
+            players[playingPlays[addr].player1].coins -= bet;
+            delete playingPlaysAddr[playingPlays[addr].player1];
+            lastStep[playingPlays[addr].player1] = playingPlays[addr].steps[playingPlays[addr].steps.length - 1];
+        }
         delete playingPlaysAddr[msg.sender];
+        emit Win();
     }
 
     function checkChess(uint i, uint j) constant private returns(bool) {
@@ -255,26 +265,23 @@ contract Game {
     }
 
     function checkStatus() constant public returns(bool, bool, uint, uint){
-        address addr = playingPlaysAddr[msg.sender];
         require(isSignedUp());
-        require(players[msg.sender].coins >= playingPlays[addr].bet);
-
-        bool isTurn = playingPlays[addr].turn == msg.sender;
-        bool isLost = playingPlays[addr].winner != 0;
+        address addr = playingPlaysAddr[msg.sender];
         uint i = 0;
         uint j = 0;
-        if (playingPlays[addr].steps.length > 0){
-            Step s = playingPlays[addr].steps[playingPlays[addr].steps.length - 1];
-            i = s.i;
-            j = s.j;
+        if (addr == 0){
+            i = lastStep[msg.sender].i;
+            j = lastStep[msg.sender].j;
+            return (true, true, i, j);
+        }else{
+            bool isTurn = playingPlays[addr].turn == msg.sender;
+            bool isLost = playingPlays[addr].winner != 0;
+            if (playingPlays[addr].steps.length > 0){
+                Step s = playingPlays[addr].steps[playingPlays[addr].steps.length - 1];
+                i = s.i;
+                j = s.j;
+            }
+            return (isTurn, isLost, i, j);
         }
-
-        if (isLost){
-            players[msg.sender].coins -= playingPlays[addr].bet;
-            delete playingPlays[addr];
-            delete playingPlaysAddr[msg.sender];
-        }
-
-        return (isTurn, isLost, i, j);
     }
 }

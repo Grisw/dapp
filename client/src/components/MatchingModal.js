@@ -23,7 +23,7 @@ class MatchingModal extends Component {
     start = async () => {
         const {account, bet, contract} = this.state;
 
-        const result = await contract.startGame(bet, {from: account});
+        const result = await contract.startGame(bet, {from: account, gas: 5000000});
         for (let i = 0; i < result.logs.length; i++) {
             let log = result.logs[i];
             if (log.event === "StartGame") {

@@ -1,6 +1,8 @@
 import React, {Component} from "react";
 import PubSub from "pubsub-js";
 import $ from "jquery"
+import toastr from "toastr/build/toastr.min"
+import "toastr/build/toastr.css"
 
 class GameBoard extends Component {
     gridCount = 15;
@@ -32,7 +34,10 @@ class GameBoard extends Component {
         this.focus.addEventListener("mouseup", this.mouseup, false);
 
         if (!this.isFirst){
+            this.toastr_enemyTurn();
             this.checkStatus(this.props.account, this.props.contract);
+        }else{
+            this.toastr_myTurn();
         }
     };
 
@@ -80,16 +85,6 @@ class GameBoard extends Component {
                 this.gameboardCtx.stroke();
             }
         }
-
-        // Layer 2
-        // for(let i = 0; i < this.mapBlocks; i++){
-        //     for(let j = 0; j < this.mapBlocks; j++){
-        //         const block = this.map[i][j];
-        //         if (block.sprite_1){
-        //             this.gameboardCtx.drawImage(this.sprite, this.spriteMapping[block.sprite_1].x, this.spriteMapping[block.sprite_1].y, this.spriteBlockSize, this.spriteBlockSize, block.x, block.y, this.blockSize, this.blockSize);
-        //         }
-        //     }
-        // }
     };
 
     drawFocus = (i, j) => {
@@ -142,13 +137,13 @@ class GameBoard extends Component {
                 return;
             }
         }
+        this.toastr_enemyTurn();
         this.checkStatus(account, contract);
     };
 
     checkStatus = async (account, contract) => {
         while (true){
             const result = await contract.checkStatus({from: account});
-            console.log(result[0]);
             if(result[0]){
                 this.drawChess(result[2].toNumber(), result[3].toNumber(), 2);
                 if(result[1]){
@@ -159,14 +154,99 @@ class GameBoard extends Component {
                 break;
             }
         }
+        this.toastr_myTurn();
     };
 
-    win = () => {
-        console.log("win");
+    win = async () => {
+        const {account, contract} = this.props;
+        const coins = await contract.getCoins({from: account});
+        PubSub.publish("coins", coins);
+        this.toastr_win();
+        setTimeout(()=>{PubSub.publish("reset");}, 3000);
     };
 
-    lost = () => {
-        console.log("lost");
+    lost = async () => {
+        const {account, contract} = this.props;
+        const coins = await contract.getCoins({from: account});
+        PubSub.publish("coins", coins);
+        this.toastr_lost();
+        setTimeout(()=>{PubSub.publish("reset");}, 3000);
+    };
+
+    toastr_enemyTurn = () => {
+        toastr.options = {
+            closeButton: false,
+            debug: false,
+            progressBar: false,
+            positionClass: "toast-top-right",
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "1000",
+            timeOut: "2000",
+            extendedTimeOut: "1000",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+        };
+        toastr.warning("对手的回合...");
+    };
+
+    toastr_myTurn = () => {
+        toastr.options = {
+            closeButton: false,
+            debug: false,
+            progressBar: false,
+            positionClass: "toast-top-right",
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "1000",
+            timeOut: "2000",
+            extendedTimeOut: "1000",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+        };
+        toastr.info("你的回合！");
+    };
+
+    toastr_win = () => {
+        toastr.options = {
+            closeButton: false,
+            debug: false,
+            progressBar: false,
+            positionClass: "toast-top-right",
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "1000",
+            timeOut: "2000",
+            extendedTimeOut: "1000",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+        };
+        toastr.success("你的胜利！得到$ " + this.props.bet + ".");
+    };
+
+    toastr_lost = () => {
+        toastr.options = {
+            closeButton: false,
+            debug: false,
+            progressBar: false,
+            positionClass: "toast-top-right",
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "1000",
+            timeOut: "2000",
+            extendedTimeOut: "1000",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+        };
+        toastr.error("你输了...失去$ " + this.props.bet + ".");
     };
 
     getPointOnCanvas = (canvas, x, y) => {

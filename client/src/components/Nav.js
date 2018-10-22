@@ -23,12 +23,19 @@ class Nav extends Component {
                 bet: message.bet
             });
         }.bind(this));
+        this.pubsub_reset = PubSub.subscribe("reset", function (topic, message) {
+            this.setState({
+                enemy: "",
+                bet: 0
+            });
+        }.bind(this));
     };
 
     componentWillUnmount = async () => {
         PubSub.unsubscribe(this.pubsub_name);
         PubSub.unsubscribe(this.pubsub_coins);
         PubSub.unsubscribe(this.pubsub_match);
+        PubSub.unsubscribe(this.pubsub_reset);
     };
 
     render() {
