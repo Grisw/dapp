@@ -32,6 +32,7 @@ class MatchingModal extends Component {
                         while (true){
                             const isConnected = await contract.checkConnection({from: account});
                             if(isConnected){
+                                $("#matchingmodal").modal("hide");
                                 this.setState({enemy: isConnected}, () => {
                                     PubSub.publish("match", {
                                         isFirst: this.state.isFirst,
@@ -39,7 +40,6 @@ class MatchingModal extends Component {
                                         enemy: this.state.enemy,
                                         bet: this.state.bet
                                     });
-                                    $("#matchingmodal").modal("hide");
                                 });
                                 break;
                             }

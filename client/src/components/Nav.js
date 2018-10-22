@@ -36,16 +36,18 @@ class Nav extends Component {
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
                 <a className="navbar-brand">{this.state.name || "Dungeon"}</a>
 
-                {this.state.hasLogin && this.state.enemy &&
-                <ul className="navbar-nav justify-content-end w-50 row">
-                    <li className="nav-item navbar-text ml-4">
-                        VS {this.state.enemy}
-                    </li>
-                    <li className="nav-item navbar-text ml-4">
-                        Bet: {this.state.bet}
-                    </li>
+                <ul className="navbar-nav justify-content-start w-50 row">
+                    {this.state.hasLogin && this.state.enemy &&
+                    <ul className="navbar-nav justify-content-start w-50 row">
+                        <li className="nav-item navbar-text ml-4">
+                            VS {this.state.enemy}
+                        </li>
+                        <li className="nav-item navbar-text ml-4">
+                            Bet: $ {this.state.bet}
+                        </li>
+                    </ul>
+                    }
                 </ul>
-                }
 
                 {this.state.hasLogin &&
                 <ul className="navbar-nav justify-content-end w-50 row">
